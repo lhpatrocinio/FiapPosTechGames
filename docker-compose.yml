@@ -1,5 +1,5 @@
 version: '3.4'
-name: FiapPostTechGames
+name: FiapGames
 services:
   games.api:
     image: ${DOCKER_REGISTRY-}gamesapi
