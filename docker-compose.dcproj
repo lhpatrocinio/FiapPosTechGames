@@ -8,6 +8,7 @@
     <DockerLaunchAction>LaunchBrowser</DockerLaunchAction>
     <DockerServiceUrl>{Scheme}://localhost:{ServicePort}/swagger</DockerServiceUrl>
     <DockerServiceName>games.api</DockerServiceName>
+    <DockerProjectName>FiapApiGames</DockerProjectName>
   </PropertyGroup>
   <ItemGroup>
     <None Include="docker-compose.override.yml">

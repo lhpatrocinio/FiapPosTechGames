@@ -3,6 +3,7 @@ name: FiapGames
 services:
   games.api:
     image: ${DOCKER_REGISTRY-}gamesapi
+    container_name: FiapGames
     build:
       context: .
       dockerfile: src/Games.Api/Dockerfile
