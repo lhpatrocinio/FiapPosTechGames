@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Games.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250920191128_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20250927204015_seedGames")]
+    partial class seedGames
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -32,12 +32,10 @@ namespace Games.Infrastructure.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Description")
-                        .IsRequired()
                         .HasMaxLength(1000)
                         .HasColumnType("nvarchar(1000)");
 
                     b.Property<string>("Developer")
-                        .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
 
@@ -45,14 +43,15 @@ namespace Games.Infrastructure.Migrations
                         .HasColumnType("decimal(6,2)");
 
                     b.Property<string>("ImageUrl")
-                        .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
                     b.Property<string>("IndicatedAgeRating")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
+
+                    b.Property<bool>("IsFree")
+                        .HasColumnType("bit");
 
                     b.Property<decimal>("Price")
                         .HasColumnType("decimal(10,2)");
@@ -85,6 +84,21 @@ namespace Games.Infrastructure.Migrations
                     b.ToTable("GMS_GameGenres", (string)null);
                 });
 
+            modelBuilder.Entity("Games.Domain.Entities.GameLibrary", b =>
+                {
+                    b.Property<Guid>("IdLibrary")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("IdGame")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("IdLibrary", "IdGame");
+
+                    b.HasIndex("IdGame");
+
+                    b.ToTable("GMS_GamesLibrary", (string)null);
+                });
+
             modelBuilder.Entity("Games.Domain.Entities.GenreTypes", b =>
                 {
                     b.Property<int>("Id")
@@ -101,6 +115,32 @@ namespace Games.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("GMS_GenreTypes", (string)null);
+                });
+
+            modelBuilder.Entity("Games.Domain.Entities.Library", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreateAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("IdUser")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("UpdateAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("GMS_Library", (string)null);
                 });
 
             modelBuilder.Entity("Games.Domain.Entities.GameGenre", b =>
@@ -122,14 +162,40 @@ namespace Games.Infrastructure.Migrations
                     b.Navigation("GenreType");
                 });
 
+            modelBuilder.Entity("Games.Domain.Entities.GameLibrary", b =>
+                {
+                    b.HasOne("Games.Domain.Entities.Game", "Game")
+                        .WithMany("GameLibraries")
+                        .HasForeignKey("IdGame")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Games.Domain.Entities.Library", "Library")
+                        .WithMany("GameLibraries")
+                        .HasForeignKey("IdLibrary")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Game");
+
+                    b.Navigation("Library");
+                });
+
             modelBuilder.Entity("Games.Domain.Entities.Game", b =>
                 {
+                    b.Navigation("GameLibraries");
+
                     b.Navigation("Genres");
                 });
 
             modelBuilder.Entity("Games.Domain.Entities.GenreTypes", b =>
                 {
                     b.Navigation("GameGenres");
+                });
+
+            modelBuilder.Entity("Games.Domain.Entities.Library", b =>
+                {
+                    b.Navigation("GameLibraries");
                 });
 #pragma warning restore 612, 618
         }

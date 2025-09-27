@@ -12,29 +12,30 @@ namespace Games.Application.Services
             _repository = repository;
         }
 
-        public Task AddAsync(Game game)
+        public async Task AddAsync(Game game)
         {
-            throw new NotImplementedException();
+            await _repository.AddAsync(game);
         }
 
-        public Task DeleteAsync(Guid id)
+        public async Task DeleteAsync(Guid id)
         {
-            throw new NotImplementedException();
+            var game = await _repository.GetByIdAsync(id);
+            await _repository.DeleteAsync(game);
         }
 
-        public Task<IEnumerable<Game>> GetAllAsync()
+        public async Task<IEnumerable<Game>> GetAllAsync()
         {
-            throw new NotImplementedException();
+           return await _repository.GetAllAsync();
         }
 
-        public Task<Game?> GetByIdAsync(Guid id)
+        public async Task<Game?> GetByIdAsync(Guid id)
         {
-            throw new NotImplementedException();
+           return await _repository.GetByIdAsync(id);
         }
 
-        public Task UpdateAsync(Game game)
+        public async Task UpdateAsync(Game game)
         {
-            throw new NotImplementedException();
+            await _repository.UpdateAsync(game);
         }
     }
 }

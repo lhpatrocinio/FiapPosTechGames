@@ -2,6 +2,7 @@
 using Games.Domain.Entities;
 using Games.Infrastructure.DataBase.EntityFramework.Context;
 using Microsoft.EntityFrameworkCore;
+using System.Threading.Tasks;
 
 namespace Games.Infrastructure.DataBase.Repository
 {
@@ -13,24 +14,26 @@ namespace Games.Infrastructure.DataBase.Repository
             _context = context;
         }
 
-        public Task AddAsync(Games.Domain.Entities.Game entity)
+        public async Task AddAsync(Games.Domain.Entities.Game entity)
         {
-            throw new NotImplementedException();
+            await _context.AddAsync(entity);
+            await SaveChangesAsync();
         }
 
-        public void Delete(Games.Domain.Entities.Game entity)
+        public async Task DeleteAsync(Games.Domain.Entities.Game entity)
         {
-            throw new NotImplementedException();
+            _context.Set<Game>().Remove(entity);
+            await SaveChangesAsync();
         }
 
-        public Task<IEnumerable<Games.Domain.Entities.Game>> GetAllAsync()
+        public async Task<IEnumerable<Games.Domain.Entities.Game>> GetAllAsync()
         {
-            throw new NotImplementedException();
+            return await _context.Set<Game>().ToListAsync();
         }
 
-        public Task<Games.Domain.Entities.Game> GetByIdAsync(object id)
+        public async Task<Games.Domain.Entities.Game> GetByIdAsync(Guid id)
         {
-            throw new NotImplementedException();
+            return await _context.Set<Game>().Where(x => x.Id == id).FirstOrDefaultAsync();
         }
 
         public async Task<IEnumerable<Game>> ListGamesFree()
@@ -43,14 +46,15 @@ namespace Games.Infrastructure.DataBase.Repository
             throw new NotImplementedException();
         }
 
-        public Task SaveChangesAsync()
+        public async Task SaveChangesAsync()
         {
-            throw new NotImplementedException();
+            await _context.SaveChangesAsync();
         }
 
-        public void Update(Games.Domain.Entities.Game entity)
+        public async Task UpdateAsync(Games.Domain.Entities.Game entity)
         {
-            throw new NotImplementedException();
+            _context.Set<Game>().Update(entity);
+            await SaveChangesAsync();
         }
     }
 }
