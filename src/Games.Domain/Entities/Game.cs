@@ -14,7 +14,8 @@ namespace Games.Domain.Entities
         public string IndicatedAgeRating { get; set; }
         public decimal HourPlayed { get; set; }
         public string ImageUrl { get; set; }
-
+        public bool IsFree { get; set; }
         public ICollection<GameGenre> Genres { get; set; }
+        public ICollection<GameLibrary> GameLibraries { get; set; } = new List<GameLibrary>();
     }
 }

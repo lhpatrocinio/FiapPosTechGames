@@ -11,5 +11,6 @@ namespace Games.Application.Repository
         void Delete(Game entity);
         Task SaveChangesAsync();
         IQueryable<Game> Query();
+        Task<IEnumerable<Game>> ListGamesFree();
     }
 }

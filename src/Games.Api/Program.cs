@@ -12,6 +12,7 @@ using Games.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Games.Api.Extensions.Mappers;
 using Games.Api.Extensions.Versioning;
+using Games.Application.Consumers;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -42,10 +43,16 @@ builder.Services.AddCors(options =>
 //builder.Services.AddMetricsCollector();
 
 
-#region [DI]]
+#region [DI]
 
 ApplicationBootstrapper.Register(builder.Services);
 InfraBootstrapper.Register(builder.Services);
+
+#endregion
+
+#region [Consumers]
+
+builder.Services.AddHostedService<UserCreatedConsumer>();
 
 #endregion
 

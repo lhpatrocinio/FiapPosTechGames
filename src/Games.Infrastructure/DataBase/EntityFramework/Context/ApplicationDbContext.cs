@@ -23,6 +23,8 @@ namespace Games.Infrastructure.DataBase.EntityFramework.Context
             builder.ApplyConfiguration(new GameConfiguration());
             builder.ApplyConfiguration(new GenreTypesConfiguration());
             builder.ApplyConfiguration(new GameGenresConfiguration());
+            builder.ApplyConfiguration(new GameLibraryConfiguration());
+            builder.ApplyConfiguration(new LibraryConfiguration());
         }
     }
 }

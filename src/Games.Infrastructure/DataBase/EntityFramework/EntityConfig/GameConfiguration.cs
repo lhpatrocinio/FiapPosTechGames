@@ -40,6 +40,10 @@ namespace Games.Infrastructure.DataBase.EntityFramework.EntityConfig
             builder.HasMany(g => g.Genres)
                 .WithOne(gg => gg.Game)
                 .HasForeignKey(gg => gg.IdGame);
+
+            builder.HasMany(gt => gt.GameLibraries)
+                .WithOne(gg => gg.Game)
+                .HasForeignKey(gg => gg.IdGame);
         }
     }
 }
