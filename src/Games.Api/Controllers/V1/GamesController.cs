@@ -26,7 +26,7 @@ namespace Games.Api.Controllers.V1
         [ProducesResponseType((int)HttpStatusCode.NotFound)]
         [ProducesResponseType((int)HttpStatusCode.Forbidden)]
         [ProducesResponseType((int)HttpStatusCode.BadRequest)]
-        [Authorize(Roles = "Admin,Usuario")]
+        [Authorize(Roles = "Games")]
         [HttpGet("list")]
         public async Task<IActionResult> GetAll(CancellationToken cancellationToken = default)
         {
@@ -38,7 +38,7 @@ namespace Games.Api.Controllers.V1
         [ProducesResponseType((int)HttpStatusCode.NotFound)]
         [ProducesResponseType((int)HttpStatusCode.Forbidden)]
         [ProducesResponseType((int)HttpStatusCode.BadRequest)]
-        [Authorize(Roles = "Admin,Usuario")]
+        [Authorize(Roles = "Games")]
         [HttpGet("getbyid")]
         public async Task<IActionResult> GetById([FromQuery] Guid id, CancellationToken cancellationToken = default)
         {

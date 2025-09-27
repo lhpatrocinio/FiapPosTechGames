@@ -43,7 +43,7 @@ namespace Games.Application.Consumers
 
                 _logger.LogInformation($"[GamesApi] Novo usuário detectado: {userEvent?.Name} - {userEvent?.Email}");
 
-             
+
 
                 _channel.BasicAck(ea.DeliveryTag, false);
             };

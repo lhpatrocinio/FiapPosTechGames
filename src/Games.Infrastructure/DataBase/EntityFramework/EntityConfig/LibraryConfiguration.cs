@@ -27,7 +27,7 @@ namespace Games.Infrastructure.DataBase.EntityFramework.EntityConfig
 
             builder.HasMany(gt => gt.GameLibraries)
            .WithOne(gg => gg.Library)
-           .HasForeignKey(gg => gg.IdLibrary);        
+           .HasForeignKey(gg => gg.IdLibrary);
         }
     }
 }
