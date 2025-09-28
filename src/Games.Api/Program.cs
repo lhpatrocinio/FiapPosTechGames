@@ -51,7 +51,7 @@ builder.Services.AddPrometheusMonitoring();
 
 #region [Consumers]
 
-// builder.Services.AddHostedService<UserCreatedConsumer>();
+builder.Services.AddHostedService<UserCreatedConsumer>();
 
 #endregion
 
