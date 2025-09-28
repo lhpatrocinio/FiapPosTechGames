@@ -13,6 +13,7 @@ using Microsoft.EntityFrameworkCore;
 using Games.Api.Extensions.Mappers;
 using Games.Api.Extensions.Versioning;
 using Games.Application.Consumers;
+using Games.Infrastructure.Monitoring;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,7 +28,6 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 builder.Services.AddAuthorizationExtension(builder.Configuration);
 
-// Adiciona configuração CORS para permitir solicitações do Prometheus
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", builder =>
@@ -38,21 +38,20 @@ builder.Services.AddCors(options =>
     });
 });
 
-//// Adiciona monitoramento com Prometheus
-//builder.Services.AddPrometheusMonitoring();
-//builder.Services.AddMetricsCollector();
-
 
 #region [DI]
 
 ApplicationBootstrapper.Register(builder.Services);
-InfraBootstrapper.Register(builder.Services);
+InfraBootstrapper.Register(builder.Services, builder.Configuration);
+
+// Prometheus monitoring
+builder.Services.AddPrometheusMonitoring();
 
 #endregion
 
 #region [Consumers]
 
-builder.Services.AddHostedService<UserCreatedConsumer>();
+// builder.Services.AddHostedService<UserCreatedConsumer>();
 
 #endregion
 
@@ -61,19 +60,29 @@ var app = builder.Build();
 app.ExecuteMigrations();
 var apiVersionDescriptionProvider = app.Services.GetRequiredService<IApiVersionDescriptionProvider>();
 
-app.UseAuthentication();                        // 1�: popula HttpContext.User
-app.UseMiddleware<RoleAuthorizationMiddleware>(); // 2�: seu middleware
+app.UseAuthentication();                        // 1°: popula HttpContext.User
+app.UseMiddleware<RoleAuthorizationMiddleware>();
 app.UseCorrelationId();
 
-// Adiciona CORS antes de outros middlewares
 app.UseCors("AllowAll");
 
-//// Adiciona middleware de monitoramento
-//app.UsePrometheusMonitoring();
-//app.UseMetricsMiddleware();
+// Prometheus middleware
+app.UsePrometheusMonitoring();
 
 app.UseVersionedSwagger(apiVersionDescriptionProvider);
-app.UseAuthorization();                         // 3�: aplica [Authorize]
+app.UseAuthorization();                         // 3°: aplica [Authorize]
 app.UseHttpsRedirection();
 app.MapControllers();
+
+// Health Check endpoints
+app.MapHealthChecks("/health");
+app.MapHealthChecks("/health/ready", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
+{
+    Predicate = check => check.Tags.Contains("ready")
+});
+app.MapHealthChecks("/health/live", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
+{
+    Predicate = check => check.Tags.Contains("live")
+});
+
 app.Run();
