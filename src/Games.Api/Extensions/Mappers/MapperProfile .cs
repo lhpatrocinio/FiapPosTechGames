@@ -24,6 +24,27 @@ namespace Games.Api.Extensions.Mappers
                 .ForMember(dest => dest.Games, opt => opt.MapFrom(src => src.Documents));
             
             CreateMap<GameDocument, GameDocumentResponse>();
+            
+            // Analytics mappings
+            CreateMap<PopularGamesResult, AnalyticsPopularGamesResponse>();
+            CreateMap<PopularGameItem, PopularGameDto>();
+            CreateMap<GenreStatsResult, AnalyticsGenreStatsResponse>();
+            CreateMap<GenreStatItem, GenreStatsDto>();
+            CreateMap<PriceRangeStatsResult, AnalyticsPriceRangeResponse>();
+            CreateMap<PriceRangeItem, PriceRangeDto>();
+            CreateMap<TopRatedGamesResult, AnalyticsTopRatedResponse>();
+            CreateMap<TopRatedGameItem, TopRatedGameDto>();
+            CreateMap<CatalogOverviewResult, AnalyticsCatalogOverviewResponse>();
+            
+            // Recommendation mappings
+            CreateMap<GameRecommendationResult, GameRecommendationResponseDto>();
+            CreateMap<RecommendedGame, RecommendedGameDto>();
+            CreateMap<SimilarGamesResult, SimilarGamesResponseDto>();
+            CreateMap<SimilarGame, SimilarGameDto>();
+            CreateMap<GenreBasedRecommendationResult, GenreBasedRecommendationResponseDto>();
+            CreateMap<GenreRecommendation, GenreRecommendationDto>();
+            CreateMap<UserPreferencesRecommendationResult, UserPreferencesRecommendationResponseDto>();
+            CreateMap<UserPreferencesProfile, UserPreferencesProfileDto>();
         }
     }
 }
