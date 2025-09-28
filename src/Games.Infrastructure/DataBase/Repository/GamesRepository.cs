@@ -28,7 +28,10 @@ namespace Games.Infrastructure.DataBase.Repository
 
         public async Task<IEnumerable<Games.Domain.Entities.Game>> GetAllAsync()
         {
-            return await _context.Set<Game>().ToListAsync();
+            return await _context.Set<Game>()
+                .Include(g => g.Genres)
+                    .ThenInclude(gg => gg.GenreType)
+                .ToListAsync();
         }
 
         public async Task<Games.Domain.Entities.Game> GetByIdAsync(Guid id)

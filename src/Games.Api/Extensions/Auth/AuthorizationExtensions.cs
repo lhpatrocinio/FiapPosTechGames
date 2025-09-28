@@ -35,12 +35,10 @@ namespace Games.Api.Extensions.Auth
                 {
                     OnAuthenticationFailed = context =>
                     {
-                        Console.WriteLine($"Erro de autenticação: {context.Exception.Message}");
                         return Task.CompletedTask;
                     },
                     OnTokenValidated = context =>
                     {
-                        Console.WriteLine("Token validado com sucesso!");
                         return Task.CompletedTask;
                     }
                 };
