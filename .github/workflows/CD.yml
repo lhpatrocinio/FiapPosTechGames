@@ -1,0 +1,77 @@
+name: CD - Deploy to Azure App Service
+
+on:
+  push:
+    branches:
+      - main
+      
+permissions:
+  id-token: write
+  contents: read
+  
+jobs:
+  build-publish-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repositório
+        uses: actions/checkout@v4
+
+      - name: Instalar .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restaurar pacotes
+        run: dotnet restore src/Games.Api/Games.Api.csproj
+
+      - name: Compilar projeto
+        run: dotnet build src/Games.Api/Games.Api.csproj --configuration Release --no-restore
+
+      - name: Publicar projeto
+        run: dotnet publish src/Games.Api/Games.Api.csproj -c Release -o ${{ github.workspace }}/publish
+      
+      - name: Instalar dotnet-ef CLI
+        run: dotnet tool install --global dotnet-ef
+
+      - name: Adicionar ferramentas globais ao PATH
+        run: echo "$HOME/.dotnet/tools" >> $GITHUB_PATH
+
+      - name: Aplicar scripts de migração
+        run: dotnet ef database update --project src/Games.Infrastructure/Games.Infrastructure.csproj --startup-project src/Games.Api/Games.Api.csproj
+        env:
+          ConnectionStrings__DefaultConnection: ${{ secrets.CONNECTION_STRING }}
+          
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.ACAGAMESAPI_AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.ACAGAMESAPI_AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.ACAGAMESAPI_AZURE_SUBSCRIPTION_ID }}    
+          
+      - name: Login no Azure Container Registry (ACR)
+        run: echo "${{ secrets.ACR_PASSWORD }}" | docker login acrinfiniteloops.azurecr.io -u ${{ secrets.ACR_USERNAME }} --password-stdin
+        
+      - name: Build da imagem
+        run: docker build -t acrinfiniteloops.azurecr.io/fiap.post.tech.games:latest -f src/Games.Api/Dockerfile .
+
+      - name: Push da imagem
+        run: docker push acrinfiniteloops.azurecr.io/fiap.post.tech.games:latest    
+
+      - name: Implantar aplicativo no azure container
+        uses: azure/container-apps-deploy-action@v2
+        with:
+          appSourcePath: ${{ github.workspace }}
+          _dockerfilePathKey_: _dockerfilePath_
+          _targetLabelKey_: _targetLabel_
+          registryUrl: acrinfiniteloops.azurecr.io
+          registryUsername: ${{ secrets.ACAGAMESAPI_REGISTRY_USERNAME }}
+          registryPassword: ${{ secrets.ACAGAMESAPI_REGISTRY_PASSWORD }}
+          containerAppName: aca-gamesapi
+          resourceGroup: PosFiap
+          imageToBuild: acrinfiniteloops.azurecr.io/aca-gamesapi:${{ github.sha }}
+          _buildArgumentsKey_: |
+            _buildArgumentsValues_
+
+
+
