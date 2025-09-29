@@ -2,6 +2,7 @@
 using Games.Api.Extensions.Auth.Middleware;
 using Games.Api.Extensions.Auth;
 using Games.Api.Extensions.Logs.Extension;
+using Games.Api.Extensions.Logs.ELK;
 using Games.Api.Extensions.Logs;
 using Games.Api.Extensions.Migration;
 using Games.Api.Extensions.Swagger.Middleware;
@@ -47,6 +48,9 @@ InfraBootstrapper.Register(builder.Services, builder.Configuration);
 // Prometheus monitoring
 builder.Services.AddPrometheusMonitoring();
 
+// ELK Stack integration  
+builder.Services.AddELKIntegration(builder.Configuration);
+
 #endregion
 
 #region [Consumers]
@@ -63,6 +67,7 @@ var apiVersionDescriptionProvider = app.Services.GetRequiredService<IApiVersionD
 app.UseAuthentication();                        // 1°: popula HttpContext.User
 app.UseMiddleware<RoleAuthorizationMiddleware>();
 app.UseCorrelationId();
+app.UseELKIntegration();
 
 app.UseCors("AllowAll");
 
