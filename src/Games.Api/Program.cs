@@ -7,6 +7,7 @@ using Games.Api.Extensions.Logs;
 using Games.Api.Extensions.Migration;
 using Games.Api.Extensions.Swagger.Middleware;
 using Games.Api.Extensions.Swagger;
+using Games.Api.Extensions.Tracing;
 using Games.Application;
 using Games.Infrastructure.DataBase.EntityFramework.Context;
 using Games.Infrastructure;
@@ -50,6 +51,9 @@ builder.Services.AddPrometheusMonitoring();
 
 // ELK Stack integration  
 builder.Services.AddELKIntegration(builder.Configuration);
+
+// Distributed Tracing with OpenTelemetry + Jaeger
+builder.Services.AddDistributedTracing(builder.Configuration);
 
 #endregion
 
