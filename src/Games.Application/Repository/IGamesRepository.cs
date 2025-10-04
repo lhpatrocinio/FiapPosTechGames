@@ -1,4 +1,5 @@
 ﻿using Games.Domain.Entities;
+using System.Threading.Tasks;
 
 namespace Games.Application.Repository
 {
@@ -12,5 +13,11 @@ namespace Games.Application.Repository
         Task SaveChangesAsync();
         IQueryable<Game> Query();
         Task<IEnumerable<Game>> ListGamesFree();
+        Task AddLibraryAsync(Games.Domain.Entities.Library entity);
+        Task<Games.Domain.Entities.Library> GetLibraryByIdAsync(Guid idUser);
+        Task AddGameLibraryAsync(Games.Domain.Entities.GameLibrary entity);
+        Task BeginTransactionAsync();
+        Task CommitTransactionAsync();
+        Task RollbackTransactionAsync();
     }
 }

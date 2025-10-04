@@ -1,10 +1,12 @@
 ﻿using Games.Application.Repository;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System.Text;
 using System.Text.Json;
+using static System.Formats.Asn1.AsnWriter;
 
 namespace Games.Application.Consumers
 {
@@ -13,8 +15,9 @@ namespace Games.Application.Consumers
         private readonly ILogger<UserCreatedConsumer> _logger;
         private IConnection _connection;
         private IModel _channel;
+        private readonly IServiceScopeFactory _serviceScopeFactory;
 
-        public UserCreatedConsumer(ILogger<UserCreatedConsumer> logger)
+        public UserCreatedConsumer(ILogger<UserCreatedConsumer> logger, IServiceScopeFactory serviceScopeFactory)
         {
             _logger = logger;
 
@@ -28,14 +31,18 @@ namespace Games.Application.Consumers
                 exclusive: false,
                 autoDelete: false,
                 arguments: null);
-
+            _serviceScopeFactory = serviceScopeFactory;
         }
 
         protected override Task ExecuteAsync(CancellationToken stoppingToken)
         {
+
             var consumer = new EventingBasicConsumer(_channel);
-            consumer.Received += (ch, ea) =>
+            consumer.Received += async (ch, ea) =>
             {
+                using var scope = _serviceScopeFactory.CreateScope();
+                var gamesRepository = scope.ServiceProvider.GetRequiredService<IGamesRepository>();
+
                 var body = ea.Body.ToArray();
                 var message = Encoding.UTF8.GetString(body);
 
@@ -43,9 +50,43 @@ namespace Games.Application.Consumers
 
                 _logger.LogInformation($"[GamesApi] Novo usuário detectado: {userEvent?.Name} - {userEvent?.Email}");
 
+                var games = await gamesRepository.ListGamesFree();
 
+                await gamesRepository.BeginTransactionAsync();
 
-                _channel.BasicAck(ea.DeliveryTag, false);
+                var library = new Domain.Entities.Library()
+                {
+                    CreateAt = DateTime.UtcNow,
+                    IdUser = userEvent.UserId,
+                    IsActive = true,
+                    Name = "Biblioteca Padrão"
+                };
+
+                await gamesRepository.AddLibraryAsync(library);
+
+                foreach (var game in games)
+                {
+                    try
+                    {
+                        await gamesRepository.AddGameLibraryAsync(new Domain.Entities.GameLibrary()
+                        {
+                            IdGame = game.Id,
+                            IdLibrary = library.Id
+                        });
+
+                        _channel.BasicAck(ea.DeliveryTag, false);
+
+                        await gamesRepository.CommitTransactionAsync();
+
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError($"Erro ao processar evento novo usuário: {userEvent?.Name} - {userEvent?.Email}", ex);
+
+                        await gamesRepository.RollbackTransactionAsync();
+                    }
+                }
+
             };
 
             _channel.BasicConsume("user-created-queue", false, consumer);

@@ -59,5 +59,50 @@ namespace Games.Infrastructure.DataBase.Repository
             _context.Set<Game>().Update(entity);
             await SaveChangesAsync();
         }
+
+        public async Task<Games.Domain.Entities.Library> GetLibraryByIdAsync(Guid idUser)
+        {
+            return await _context.Set<Library>().Where(x => x.Id == idUser).FirstOrDefaultAsync();
+        }
+
+        public async Task AddLibraryAsync(Games.Domain.Entities.Library entity)
+        {
+            await _context.AddAsync(entity);
+            await SaveChangesAsync();
+        }
+
+        public async Task AddGameLibraryAsync(Games.Domain.Entities.GameLibrary entity)
+        {        await _context.AddAsync(entity);
+            await SaveChangesAsync();
+    
+        }
+
+        public async Task<IEnumerable<Game>> AddGameLibraryAsync(Guid idUser)
+        {
+            var userGames = await (
+                         from g in _context.Set<Game>()
+                         join gl in _context.Set<GameLibrary>() on g.Id equals gl.IdGame
+                         join l in _context.Set<Library>() on gl.IdLibrary equals l.Id
+                         where l.IdUser == idUser
+                         select g
+                     ).ToListAsync();
+
+            return userGames;
+        }
+
+        public async Task BeginTransactionAsync()
+        {
+            await _context.Database.BeginTransactionAsync();
+        }
+
+        public async Task CommitTransactionAsync()
+        {
+            await _context.Database.CommitTransactionAsync();
+        }
+
+        public async Task RollbackTransactionAsync()
+        {
+            await _context.Database.RollbackTransactionAsync();
+        }
     }
 }
