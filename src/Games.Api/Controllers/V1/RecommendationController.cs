@@ -13,7 +13,7 @@ namespace Games.Api.Controllers.V1
     [ApiController]
     [ApiVersion("1.0")]
     [Route("api/v{version:apiVersion}/[controller]")]
-    [AllowAnonymous]
+    [Authorize(Roles = "Games")]
     public class RecommendationController : ControllerBase
     {
         private readonly IElasticsearchRecommendationService _recommendationService;

@@ -14,7 +14,7 @@ namespace Games.Api.Controllers.V1
     [ApiController]
     [Route("api/v{version:apiVersion}/[controller]")]
     [ApiVersion("1.0")]
-    [AllowAnonymous]
+    [Authorize(Roles = "Games")]
     public class SearchController : ControllerBase
     {
         private readonly IElasticsearchService _elasticsearchService;
