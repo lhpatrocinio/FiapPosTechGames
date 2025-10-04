@@ -1,9 +1,11 @@
 using Asp.Versioning;
 using AutoMapper;
 using Games.Api.Dtos.Responses;
+using Games.Api.Extensions.Tracing;
 using Games.Infrastructure.Search.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Diagnostics;
 using System.Net;
 
 namespace Games.Api.Controllers.V1
@@ -40,22 +42,40 @@ namespace Games.Api.Controllers.V1
         [ProducesResponseType((int)HttpStatusCode.ServiceUnavailable)]
         public async Task<IActionResult> GetPopularGames([FromQuery] int limit = 10)
         {
+            using var activity = DistributedTracingExtensions.StartActivity("analytics.get_popular_games");
+            
             try
             {
+                activity?.EnrichActivity(new Dictionary<string, object>
+                {
+                    ["analytics.operation"] = "popular_games",
+                    ["analytics.limit"] = limit,
+                    ["user.id"] = User?.Identity?.Name ?? "anonymous"
+                });
+
                 if (limit <= 0 || limit > 50)
                 {
+                    activity?.SetTag("validation.error", "limit_out_of_range");
                     return BadRequest("Limit deve estar entre 1 e 50");
                 }
 
                 var result = await _analyticsService.GetPopularGamesAsync(limit);
                 var response = _mapper.Map<AnalyticsPopularGamesResponse>(result);
 
+                activity?.EnrichActivity(new Dictionary<string, object>
+                {
+                    ["analytics.games_count"] = result.Games.Count,
+                    ["response.size"] = response.Games.Count
+                });
+
                 _logger.LogInformation("Popular games analytics executed: {Count} games returned", result.Games.Count);
                 
+                activity?.SetSuccess();
                 return Ok(response);
             }
             catch (Exception ex)
             {
+                activity?.SetError(ex);
                 _logger.LogError(ex, "Error getting popular games analytics");
                 return StatusCode(503, "Erro interno ao obter jogos populares");
             }
