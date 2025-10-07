@@ -80,7 +80,7 @@ app.UsePrometheusMonitoring();
 
 app.UseVersionedSwagger(apiVersionDescriptionProvider);
 app.UseAuthorization();                         // 3°: aplica [Authorize]
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection();
 app.MapControllers();
 
 // Health Check endpoints

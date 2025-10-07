@@ -1,4 +1,5 @@
-﻿using Games.Application.Services;
+﻿using Games.Application.producer;
+using Games.Application.Services;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Games.Application
@@ -8,6 +9,7 @@ namespace Games.Application
         public static void Register(IServiceCollection services)
         {
             services.AddTransient<IGameService, GameService>();
+            services.AddTransient<IUserActiveProducer, UserActiveProducer>();
         }
     }
 }

@@ -26,7 +26,7 @@ namespace Games.Application.Consumers
             _channel = _connection.CreateModel();
 
             _channel.QueueDeclare(
-                queue: "user-created-queue",
+                queue: "create-queue",
                 durable: true,
                 exclusive: false,
                 autoDelete: false,
@@ -41,7 +41,7 @@ namespace Games.Application.Consumers
             consumer.Received += async (ch, ea) =>
             {
                 using var scope = _serviceScopeFactory.CreateScope();
-                var gamesRepository = scope.ServiceProvider.GetRequiredService<IGamesRepository>();
+                var gamesRepository = scope.ServiceProvider.GetRequiredService<IGamesRepository>();    
 
                 var body = ea.Body.ToArray();
                 var message = Encoding.UTF8.GetString(body);
@@ -80,6 +80,9 @@ namespace Games.Application.Consumers
 
                     }
                     catch (Exception ex)
+
+
+
                     {
                         _logger.LogError($"Erro ao processar evento novo usuário: {userEvent?.Name} - {userEvent?.Email}", ex);
 
@@ -87,9 +90,18 @@ namespace Games.Application.Consumers
                     }
                 }
 
+                var userProducer = scope.ServiceProvider.GetRequiredService<producer.IUserActiveProducer>();
+                userProducer.PublishUserActiveEvent(new producer.UserEvent()
+                {
+                    Id = userEvent.UserId,
+                    Name = userEvent.Name,
+                    Email = userEvent.Email,
+                    EventType = producer.EventUser.active
+                });
+
             };
 
-            _channel.BasicConsume("user-created-queue", false, consumer);
+            _channel.BasicConsume("create-queue", false, consumer);       
 
             return Task.CompletedTask;
         }
