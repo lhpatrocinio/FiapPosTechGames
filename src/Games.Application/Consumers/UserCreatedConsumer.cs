@@ -14,7 +14,7 @@ namespace Games.Application.Consumers
 {
     public class UserCreatedConsumer : BackgroundService
     {
-        private readonly ILogger<UserCreatedConsumer> _logger;      
+        private readonly ILogger<UserCreatedConsumer> _logger;
         private readonly IServiceScopeFactory _serviceScopeFactory;
         private readonly RabbitMqSetup _setup;
         private readonly IModel _channel;
@@ -25,7 +25,7 @@ namespace Games.Application.Consumers
         {
             _logger = logger;
             _setup = setup;
-            _channel = _setup.CreateChannel("create");
+            _channel = _setup.CreateChannel("user_create");
             _serviceScopeFactory = serviceScopeFactory;
         }
 
@@ -117,13 +117,15 @@ namespace Games.Application.Consumers
         private void PublicarEvento(IServiceScope scope, UserCreatedEvent userEvent)
         {
             var userProducer = scope.ServiceProvider.GetRequiredService<producer.IUserActiveProducer>();
-            userProducer.PublishUserActiveEvent(new producer.UserEvent()
+            var message = JsonSerializer.Serialize(new producer.UserEvent()
             {
                 Id = userEvent.UserId,
                 Name = userEvent.Name,
                 Email = userEvent.Email,
                 EventType = producer.EventUser.active
             });
+
+            userProducer.PublishUserActiveEvent("user_active_queue", message);
         }
 
         private int GetRetryCount(IBasicProperties props)

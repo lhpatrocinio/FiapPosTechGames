@@ -8,6 +8,6 @@ namespace Games.Application.producer
 {
     public interface IUserActiveProducer
     {
-        void PublishUserActiveEvent(UserEvent user);
+        void PublishUserActiveEvent(string queue, string message);
     }
 }

@@ -23,12 +23,12 @@ namespace Games.Application.Rabbit
         private void ConfigureRabbitMq(string eventQueue)
         {
 
-            var ExchangeMain = $"user_{eventQueue}_exchange";
-            var ExchangeDLX = $"user_{eventQueue}_dlx";
-            var QueueMain = $"user_{eventQueue}_queue";
-            var QueueRetry = $"user_{eventQueue}_queue";
-            var QueueDLQ = $"user_{eventQueue}_dlq";
-            var RoutingKey = $"user_{eventQueue}_key";
+            var ExchangeMain = $"{eventQueue}_exchange";
+            var ExchangeDLX = $"{eventQueue}_dlx";
+            var QueueMain = $"{eventQueue}_queue";
+            var QueueRetry = $"{eventQueue}_queue";
+            var QueueDLQ = $"{eventQueue}_dlq";
+            var RoutingKey = $"{eventQueue}_key";
 
             _channel.ExchangeDeclare(ExchangeMain, ExchangeType.Direct, durable: true);
 

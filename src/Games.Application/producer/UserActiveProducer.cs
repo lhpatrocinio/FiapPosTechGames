@@ -10,33 +10,24 @@ namespace Games.Application.producer
 {
     public class UserActiveProducer: IUserActiveProducer
     {
-        public void PublishUserActiveEvent(UserEvent user)
+        public void PublishUserActiveEvent(string queue, string message)
         {
             var factory = new ConnectionFactory() { HostName = "rabbitmq" }; // ou nome do container no docker-compose
             using var connection = factory.CreateConnection();
             using var channel = connection.CreateModel();
 
-            var eventDescription = user.EventType.ToString();
             channel.QueueDeclare(
-                queue: $"{eventDescription}-queue",
+                queue: queue,
                 durable: true,
                 exclusive: false,
                 autoDelete: false,
                 arguments: null);
-
-            var message = JsonSerializer.Serialize(new
-            {
-                UserId = user.Id,
-                Name = user.Name,
-                Email = user.Email,
-                CreatedAt = DateTime.UtcNow
-            });
-
+                      
             var body = Encoding.UTF8.GetBytes(message);
 
             channel.BasicPublish(
                 exchange: "",
-                routingKey: $"{eventDescription}-queue",
+                routingKey: queue,
                 basicProperties: null,
                 body: body);
         }
