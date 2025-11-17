@@ -16,6 +16,7 @@ using Games.Api.Extensions.Mappers;
 using Games.Api.Extensions.Versioning;
 using Games.Application.Consumers;
 using Games.Infrastructure.Monitoring;
+using Games.Application.Rabbit;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -58,7 +59,7 @@ builder.Services.AddDistributedTracing(builder.Configuration);
 #endregion
 
 #region [Consumers]
-
+builder.Services.AddSingleton<RabbitMqSetup>();
 builder.Services.AddHostedService<UserCreatedConsumer>();
 
 #endregion
@@ -80,7 +81,7 @@ app.UsePrometheusMonitoring();
 
 app.UseVersionedSwagger(apiVersionDescriptionProvider);
 app.UseAuthorization();                         // 3°: aplica [Authorize]
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection();
 app.MapControllers();
 
 // Health Check endpoints

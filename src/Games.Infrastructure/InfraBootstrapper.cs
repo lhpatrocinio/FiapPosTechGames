@@ -12,7 +12,7 @@ namespace Games.Infrastructure
     {
         public static void Register(IServiceCollection services, IConfiguration configuration)
         {
-            services.AddTransient<IGamesRepository, GamesRepository>();
+            services.AddScoped<IGamesRepository, GamesRepository>();
             services.AddTransient<IElasticsearchAnalyticsService, ElasticsearchAnalyticsService>();
             services.AddTransient<IElasticsearchRecommendationService, ElasticsearchRecommendationService>();
             services.AddElasticsearch(configuration);
