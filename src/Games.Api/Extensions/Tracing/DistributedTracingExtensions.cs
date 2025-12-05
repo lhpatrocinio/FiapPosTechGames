@@ -56,8 +56,14 @@ namespace Games.Api.Extensions.Tracing
                             .AddHttpClientInstrumentation()
                             .AddOtlpExporter(options =>
                             {
-                                var otlpEndpoint = configuration["OpenTelemetry:Otlp:Endpoint"] ?? "http://jaeger:4317";
+                                // Detectar ambiente: K8s (tem KUBERNETES_SERVICE_HOST) ou Docker
+                                var isKubernetes = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("KUBERNETES_SERVICE_HOST"));
+                                var otlpEndpoint = isKubernetes 
+                                    ? configuration["OpenTelemetry:Otlp:EndpointK8s"] ?? "http://jaeger-service.monitoring.svc.cluster.local:4317"
+                                    : configuration["OpenTelemetry:Otlp:Endpoint"] ?? "http://jaeger:4317";
+                                
                                 options.Endpoint = new Uri(otlpEndpoint);
+                                Console.WriteLine($"✅ OpenTelemetry endpoint: {otlpEndpoint} (Environment: {(isKubernetes ? "Kubernetes" : "Docker")}");
                             });
                     });
 
