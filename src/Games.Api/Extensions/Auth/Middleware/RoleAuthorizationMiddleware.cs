@@ -20,10 +20,11 @@ namespace Games.Api.Extensions.Auth.Middleware
 
             if (endpoint != null)
             {
-                // Verificar se tem AllowAnonymous primeiro
+                // Check if the endpoint allows anonymous access
                 var allowAnonymousAttribute = endpoint.Metadata.GetMetadata<AllowAnonymousAttribute>();
                 if (allowAnonymousAttribute != null)
                 {
+                    // Skip authorization for anonymous endpoints
                     await _next(context);
                     return;
                 }

@@ -1,10 +1,6 @@
-# FiapPosTechGames - Microserviço de Jogos
+# FiapPosTechGames - Elasticsearch Integration
 
-Microserviço de catálogo de jogos com **observabilidade completa** implementando:
-- **🔍 Elasticsearch 8.10.4**: Busca avançada, analytics e recomendações inteligentes
-- **📊 Distributed Tracing**: OpenTelemetry + Jaeger para rastreamento distribuído
-- **📈 Monitoramento**: Prometheus + Grafana + ELK Stack
-- **🚀 Infraestrutura**: Docker containerizado com health checks
+Microserviço de catálogo de jogos com **Elasticsearch 8.10.4** implementando busca avançada, analytics e sistema de recomendações inteligentes.
 
 ## 🎯 **Como o Elasticsearch está Funcionando**
 
@@ -22,14 +18,6 @@ O sistema utiliza Elasticsearch como motor principal para:
 - **Agregações**: Queries complexas para analytics e recomendações
 - **Infraestrutura**: Docker containerizado para ambiente consistente
 
-### **🔍 Observabilidade & Distributed Tracing**
-- **OpenTelemetry**: Instrumentação automática de HTTP requests e ASP.NET Core
-- **Jaeger**: Visualização de traces distribuídos na porta 16686
-- **Service Name**: "Games.Api" para identificação no tracing
-- **Custom Activities**: Instrumentação personalizada no AnalyticsController
-- **Trace Correlation**: Correlação automática entre microserviços
-- **Performance Monitoring**: Medição de latência e identificação de gargalos
-
 ## 🚀 **Como Iniciar**
 
 ### **1. Pré-requisitos**
@@ -45,18 +33,16 @@ O sistema utiliza Elasticsearch como motor principal para:
 # 1. Navegar para o diretório de infraestrutura
 cd ../FiapPostTechDocker
 
-# 2. Subir infraestrutura completa
-docker-compose up -d sqlserver elasticsearch kibana logstash prometheus grafana jaeger rabbitmq
+# 2. Subir SQL Server + Elasticsearch
+docker-compose up -d sqlserver elasticsearch
 
 # 3. Verificar containers rodando
 docker ps
-# Deve mostrar: sqlserver (1433), elasticsearch (9200), jaeger (16686), prometheus (9090), etc.
+# Deve mostrar: sqlserver (1433) + elasticsearch (9200)
 
-# 4. Testar serviços principais
-curl http://localhost:9200     # Elasticsearch
-curl http://localhost:16686    # Jaeger UI
-curl http://localhost:9090     # Prometheus
-curl http://localhost:3000     # Grafana
+# 4. Testar Elasticsearch
+curl http://localhost:9200
+# Response: {"cluster_name": "docker-cluster", "version": {"number": "8.10.4"}}
 ```
 
 ### **3. Aplicação (.NET)**
@@ -277,23 +263,11 @@ curl "http://localhost:9200/games/_count"
 
 ## 📈 **Monitoramento Elasticsearch**
 
-### **Health Checks e Observabilidade**
+### **Health Checks Integrados**
 - **`/health`**: Status geral da aplicação + Elasticsearch
 - **`/health/ready`**: Verificação específica de conectividade ES
 - **`/health/live`**: Liveness probe para containers
 - **`/metrics`**: Métricas Prometheus para observabilidade
-
-### **🔍 Distributed Tracing Endpoints**
-- **Jaeger UI**: `http://localhost:16686` - Visualização de traces
-- **Service Name**: "Games.Api" - Identificação no Jaeger
-- **Trace Correlation**: Automática em todas as HTTP requests
-- **Custom Spans**: Implementados no AnalyticsController para operações críticas
-
-### **📊 Dashboards de Monitoramento**
-- **Grafana**: `http://localhost:3000` (admin/admin)
-- **Prometheus**: `http://localhost:9090` - Métricas coletadas
-- **Kibana**: `http://localhost:5601` - Logs centralizados
-- **RabbitMQ**: `http://localhost:15672` (guest/guest)
 
 ### **Logs Estruturados**
 O sistema gera logs estruturados para:
@@ -307,9 +281,9 @@ O sistema gera logs estruturados para:
 - **Prometheus**: Métricas de performance exportadas
 - **Docker**: Logs centralizados via container runtime
 
-## � **Troubleshooting Completo**
+## � **Troubleshooting Elasticsearch**
 
-### **Problemas Elasticsearch**
+### **Problemas Comuns**
 
 **Elasticsearch não conecta**:
 1. Verificar se container está rodando: `docker ps | grep elasticsearch`
@@ -321,17 +295,10 @@ O sistema gera logs estruturados para:
 2. Verificar contagem: `curl "http://localhost:9200/games/_count"`
 3. Verificar migrations: `dotnet ef migrations list`
 
-### **Problemas Distributed Tracing**
-
-**Traces não aparecem no Jaeger**:
-1. Verificar Jaeger: `curl http://localhost:16686`
-2. Verificar configuração OpenTelemetry nos logs da aplicação
-3. Verificar se RabbitMQ está rodando: `docker ps | grep rabbitmq`
-
 **Performance lenta**:
 - Ajustar memória: `ES_JAVA_OPTS=-Xms512m -Xmx512m`
-- Verificar traces no Jaeger para identificar gargalos
 - Otimizar queries com filtros específicos
+- Implementar cache para buscas frequentes
 
 ## ✅ **Requisitos FIAP Tech Challenge Atendidos**
 
@@ -341,18 +308,12 @@ O sistema gera logs estruturados para:
 - **✅ Agregações para métricas**: 5 endpoints de analytics
 - **✅ Recomendações baseadas em histórico**: 5 algoritmos inteligentes
 
-### **Distributed Tracing - 100% Implementado**
-- **✅ OpenTelemetry**: Instrumentação automática completa
-- **✅ Jaeger**: Coleta e visualização de traces distribuídos
-- **✅ Service Correlation**: Rastreamento entre microserviços
-- **✅ Performance Monitoring**: Identificação de gargalos
-
 ### **Funcionalidades Extras Implementadas**
 - **🔍 Busca Avançada**: Fuzzy search com tolerância a erros
 - **📊 Analytics em Tempo Real**: Métricas de negócio via agregações
 - **🤖 Sistema de Recomendações**: 5 algoritmos com weighted scoring
-- **⚙️ Observabilidade Completa**: ELK + Prometheus + Grafana + Jaeger
-- **🚀 Performance**: Queries otimizadas < 100ms com monitoramento
+- **⚙️ Health Monitoring**: Observabilidade completa
+- **🚀 Performance**: Queries otimizadas < 100ms
 
 ## 👥 **Ecossistema FIAP Tech Challenge**
 
@@ -371,8 +332,4 @@ Este projeto faz parte da arquitetura de microserviços:
 
 ---
 
-**🎆 Microserviço Games com observabilidade completa em produção:**
-- **16 endpoints ativos** com Elasticsearch
-- **Distributed Tracing** com OpenTelemetry + Jaeger
-- **Monitoramento completo** com Prometheus + Grafana + ELK Stack
-- **Health checks** em todos os componentes
+**🎆 Sistema Elasticsearch funcionando em produção com 16 endpoints ativos**
