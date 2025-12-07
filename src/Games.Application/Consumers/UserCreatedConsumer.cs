@@ -19,9 +19,11 @@ namespace Games.Application.Consumers
         private readonly RabbitMqSetup _setup;
         private readonly IModel _channel;
         private const int MaxRetries = 3;
-        public BasicDeliverEventArgs _basicDeliver;
 
-        public UserCreatedConsumer(ILogger<UserCreatedConsumer> logger, IServiceScopeFactory serviceScopeFactory, RabbitMqSetup setup)
+        public UserCreatedConsumer(
+            ILogger<UserCreatedConsumer> logger,
+            IServiceScopeFactory serviceScopeFactory,
+            RabbitMqSetup setup)
         {
             _logger = logger;
             _setup = setup;
@@ -31,26 +33,31 @@ namespace Games.Application.Consumers
 
         protected override Task ExecuteAsync(CancellationToken stoppingToken)
         {
-
             var consumer = new EventingBasicConsumer(_channel);
+
             consumer.Received += async (ch, ea) =>
             {
-                _basicDeliver = ea;
-                var body = ea.Body.ToArray();
-                var message = Encoding.UTF8.GetString(body);
+                var message = Encoding.UTF8.GetString(ea.Body.ToArray());
                 var userEvent = JsonSerializer.Deserialize<UserCreatedEvent>(message);
-
-                _logger.LogInformation($"[GamesApi] Novo usuário detectado: {userEvent?.Name} - {userEvent?.Email}");
 
                 using var scope = _serviceScopeFactory.CreateScope();
 
-                await AdicionarBiblioteca(scope, userEvent);
+                try
+                {
+                    bool ok = await ProcessarUsuario(scope, userEvent);
 
-                PublicarEvento(scope, userEvent);
+                    if (ok)
+                    {
+                        _channel.BasicAck(ea.DeliveryTag, false);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    await TratarErro(ea, scope, userEvent, ex);
+                }
             };
 
-            _channel.BasicConsume("user_create_queue", false, consumer);
-
+            _channel.BasicConsume("user_create_queue", autoAck: false, consumer);
             return Task.CompletedTask;
         }
 
@@ -60,58 +67,56 @@ namespace Games.Application.Consumers
             base.Dispose();
         }
 
-        private async Task AdicionarBiblioteca(IServiceScope scope, UserCreatedEvent userEvent)
+        private async Task<bool> ProcessarUsuario(IServiceScope scope, UserCreatedEvent userEvent)
         {
-            var gamesRepository = scope.ServiceProvider.GetRequiredService<IGamesRepository>();
-            var games = await gamesRepository.ListGamesFree();
+            var repo = scope.ServiceProvider.GetRequiredService<IGamesRepository>();
+            var games = await repo.ListGamesFree();
 
-            await gamesRepository.BeginTransactionAsync();
-            try
+            await repo.BeginTransactionAsync();
+
+            // Simula erro
+            throw new Exception("Teste RETRY");
+
+            var library = new Domain.Entities.Library()
             {
-                var library = new Domain.Entities.Library()
-                {
-                    CreateAt = DateTime.UtcNow,
-                    IdUser = userEvent.UserId,
-                    IsActive = true,
-                    Name = "Biblioteca Padrão"
-                };
+                CreateAt = DateTime.UtcNow,
+                IdUser = userEvent.UserId,
+                IsActive = true,
+                Name = "Biblioteca Padrão"
+            };
 
-                await gamesRepository.AddLibraryAsync(library);
+            await repo.AddLibraryAsync(library);
 
-                foreach (var game in games)
-                {
-
-                    await gamesRepository.AddGameLibraryAsync(new Domain.Entities.GameLibrary()
-                    {
-                        IdGame = game.Id,
-                        IdLibrary = library.Id
-                    });
-
-                    _channel.BasicAck(_basicDeliver.DeliveryTag, false);
-                }
-
-                await gamesRepository.CommitTransactionAsync();
-            }
-            catch (Exception ex)
+            foreach (var game in games)
             {
-                _logger.LogError($"Erro ao processar evento novo usuário: {userEvent?.Name} - {userEvent?.Email}", ex);
-                await gamesRepository.RollbackTransactionAsync();
-
-                int retryCount = GetRetryCount(_basicDeliver.BasicProperties);
-
-                if (retryCount >= MaxRetries)
+                await repo.AddGameLibraryAsync(new Domain.Entities.GameLibrary()
                 {
-                    _logger.LogInformation($"Enviando para DLQ após {retryCount} tentativas");
-                    SendToDlq(_basicDeliver.Body.ToArray());
-                    _channel.BasicAck(_basicDeliver.DeliveryTag, false);
-                }
-                else
-                {
-                    _logger.LogInformation($"Retry {retryCount + 1} de {MaxRetries}");
-                    SendToRetryQueue(_basicDeliver.Body.ToArray(), retryCount + 1);
-                    _channel.BasicAck(_basicDeliver.DeliveryTag, false);
-                }
+                    IdGame = game.Id,
+                    IdLibrary = library.Id
+                });
             }
+
+            await repo.CommitTransactionAsync();
+            return true;
+        }
+
+        private async Task TratarErro(BasicDeliverEventArgs ea, IServiceScope scope, UserCreatedEvent userEvent, Exception ex)
+        {
+            _logger.LogError($"Erro ao processar evento: {ex.Message}");
+
+            int retryCount = GetRetryCount(ea.BasicProperties);
+            var json = JsonSerializer.Serialize(userEvent);
+
+            if (retryCount >= MaxRetries)
+            {
+                SendToDlq(json);
+            }
+            else
+            {
+                SendToRetryQueue(json, retryCount + 1);
+            }
+
+            _channel.BasicAck(ea.DeliveryTag, false);
         }
 
         private void PublicarEvento(IServiceScope scope, UserCreatedEvent userEvent)
@@ -137,32 +142,32 @@ namespace Games.Application.Consumers
             return 0;
         }
 
-        private void SendToRetryQueue(byte[] body, int retryCount)
+        private void SendToRetryQueue(string message, int retryCount)
         {
             var props = _channel.CreateBasicProperties();
             props.Persistent = true;
             props.Headers = new Dictionary<string, object>
-            {
-                { "x-retry-count", Encoding.UTF8.GetBytes(retryCount.ToString()) }
-            };
+        {
+            { "x-retry-count", Encoding.UTF8.GetBytes(retryCount.ToString()) }
+        };
 
             _channel.BasicPublish(
-                exchange: "",
-                routingKey: "user_create_queue",
-                basicProperties: props,
-                body: body);
+                 exchange: "user_create_dlx",
+                 routingKey: "user_create_retry_key",
+                 basicProperties: props,
+                 body: Encoding.UTF8.GetBytes(message));
         }
 
-        private void SendToDlq(byte[] body)
+        private void SendToDlq(string message)
         {
             var props = _channel.CreateBasicProperties();
             props.Persistent = true;
 
             _channel.BasicPublish(
-                exchange: "",
-                routingKey: "user_create_dlq",
-                basicProperties: props,
-                body: body);
+       exchange: "user_create_dlx",
+       routingKey: "user_create_dlq_key",
+       basicProperties: props,
+       body: Encoding.UTF8.GetBytes(message));
         }
     }
 
