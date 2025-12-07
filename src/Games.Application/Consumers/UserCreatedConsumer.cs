@@ -49,6 +49,7 @@ namespace Games.Application.Consumers
                     if (ok)
                     {
                         _channel.BasicAck(ea.DeliveryTag, false);
+                        PublicarEvento(scope, userEvent);
                     }
                 }
                 catch (Exception ex)
@@ -73,9 +74,6 @@ namespace Games.Application.Consumers
             var games = await repo.ListGamesFree();
 
             await repo.BeginTransactionAsync();
-
-            // Simula erro
-            throw new Exception("Teste RETRY");
 
             var library = new Domain.Entities.Library()
             {
